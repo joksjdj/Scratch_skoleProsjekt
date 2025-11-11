@@ -16,7 +16,8 @@ For nå bruker jeg kun js, html og css, men senere nå jeg skal lagre ting tenke
 - ui - utvikling
   
 - presets - utvikling
-  
+
+Jeg kan vise kompetanse ved å logge hva jeg har gjort og hvorfor. Hvordan jeg lærte det, spesielt hvis jeg lærte fra gpt.
 
 ## Mappe struktur
 Jeg tok et screenshot og ba gpt om å gi en tekst verson.
