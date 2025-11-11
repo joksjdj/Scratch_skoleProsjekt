@@ -48,3 +48,8 @@ textarea {
     box-sizing: border-box;
     border: solid black;
 }
+
+.presetsBody div {
+    border: solid black;
+    box-sizing: border-box;
+}
