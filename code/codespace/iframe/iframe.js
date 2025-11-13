@@ -1,18 +1,9 @@
-{
-    function presetPages(e) {
-        const presetsBody = document.getElementById("presetsBody");
-        presetsBody.querySelectorAll("div").forEach(div => div.remove());
-
-        const imageFiles = ["stickman.svg"];
-
-        imageFiles.forEach(file => {
-            const div = document.createElement("div");
-            presetsBody.appendChild(div);
-            
-            const img = document.createElement("img");
-            img.src = `../../../public/images/${e}/${file}`;
-            div.appendChild(img);
-        });
-
-    }
+function removeScript() {
+    document.querySelector(".removeScriptArrow").classList.toggle("removeScript")
+    document.querySelector(".textarea").classList.toggle("removeScript")
 }
+
+const canvas = document.getElementById('canvas');
+canvas.addEventListener('click', e => {
+  parent.postMessage({ type: 'canvasClick', x: e.clientX, y: e.clientY }, '*');
+});

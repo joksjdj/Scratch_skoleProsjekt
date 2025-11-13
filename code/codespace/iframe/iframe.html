@@ -8,30 +8,11 @@
     <script src="iframe.js" defer></script>
 </head>
 <body>
-    <div class="Halfcodespace">
-        <canvas></canvas>
+    <canvas id="canvas"></canvas>
+    <div class="removeScriptArrow" onclick="removeScript()">
+        <h1>&gt;</h1>
+        <h1>&lt;</h1>
     </div>
-    
-    <div class="Halfcodespace">
-        <textarea name="" id=""></textarea>
-        <div class="presets">
-            <header class="presetsHeader">
-                <button>
-                    <h1>Background</h1>
-                </button>
-                <button onclick="presetPages('figures')">
-                    <h1>Figures</h1>
-                </button>
-                <button>
-                    <h1>Buttons</h1>
-                </button>
-                <button>
-                    <img src="../../../images/cross.svg" alt="">
-                </button>
-            </header>
-
-            <div id="presetsBody"></div>
-        </div>
-    </div>
+    <textarea class="textarea" name="" id=""></textarea>
 </body>
 </html>

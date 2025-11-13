@@ -5,8 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="codespace.css">
+    <script src="codespace.js" defer></script>
 </head>
 <body>
-    <iframe sandbox="allow-scripts" src="iframe/iframe.html" frameborder="0"></iframe>
+
+    <div class="main">
+        <div class="Halfcodespace">
+            <iframe id="iframe" sandbox="allow-scripts" src="iframe/iframe.html" frameborder="0"></iframe>
+        </div>
+        
+        <div class="Halfcodespace">
+
+            <div></div>
+
+            <div class="presets">
+
+                <header class="presetsHeader">
+                    <button onclick="presetPages('background')">
+                        <h1>Background</h1>
+                    </button>
+                    <button onclick="presetPages('figures')">
+                        <h1>Figures</h1>
+                    </button>
+                    <button onclick="presetPages('buttons')">
+                        <h1>Buttons</h1>
+                    </button>
+                    <button>
+                        <img src="../../images/cross.svg" alt="">
+                    </button>
+                </header>
+
+                <div id="presetsBody"></div>
+            </div>
+
+        </div>
+
+    </div>
+
 </body>
 </html>
