@@ -10,34 +10,74 @@
 <body>
 
     <div class="main">
-        <div class="Halfcodespace">
-            <iframe id="iframe" sandbox="allow-scripts" src="iframe/iframe.html" frameborder="0"></iframe>
-        </div>
-        
-        <div class="Halfcodespace">
 
-            <div></div>
-
-            <div class="presets">
-
-                <header class="presetsHeader">
-                    <button onclick="presetPages('background')">
-                        <h1>Background</h1>
-                    </button>
-                    <button onclick="presetPages('figures')">
-                        <h1>Figures</h1>
-                    </button>
-                    <button onclick="presetPages('buttons')">
-                        <h1>Buttons</h1>
-                    </button>
-                    <button>
-                        <img src="../../images/cross.svg" alt="">
-                    </button>
-                </header>
-
-                <div id="presetsBody"></div>
+        <div class="vertical">
+            <div class="arrowVertical">
+                <div class="removeScriptArrow" onclick="removeScript(this, 'top-right')">
+                    <h1>&gt;</h1>
+                </div>
             </div>
 
+            <div class="arrowVertical" style="height: 50%;">
+                <div class="removeScriptArrow" onclick="removeScript(this, 'bottom-right')">
+                    <h1>&gt;</h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="arrowHorizontal">
+            <div class="removeScriptArrow" onclick="removeScript(this, 'both')">
+                <h1>&gt;</h1>
+            </div>
+        </div>
+
+        <iframe id="iframe" class="top-left" sandbox="allow-scripts" src="iframe/iframe.html" frameborder="0"></iframe>
+
+        <textarea class="textarea top-right" name="" id=""></textarea>
+
+        <div class="presetsControll bottom-left presetBox">
+
+            <header class="presetsHeader">
+                <button onclick="presetControllPages('Background')">
+                    <h1>Background</h1>
+                </button>
+                <button onclick="presetControllPages('Figures')">
+                    <h1>Figures</h1>
+                </button>
+                <button onclick="presetControllPages('Buttons')">
+                    <h1>Buttons</h1>
+                </button>
+                <button>
+                    <img src="../../images/cross.svg" alt="">
+                </button>
+            </header>
+
+            <div id="presetsControllBody">
+                <div id="presetsControllBackground"></div>
+                <div id="presetsControllFigures"></div>
+                <div id="presetsControllButtons"></div>
+            </div>
+
+        </div>
+
+        <div class="presets bottom-right presetBox">
+
+            <header class="presetsHeader">
+                <button onclick="presetPages('background')">
+                    <h1>Background</h1>
+                </button>
+                <button onclick="presetPages('figures')">
+                    <h1>Figures</h1>
+                </button>
+                <button onclick="presetPages('buttons')">
+                    <h1>Buttons</h1>
+                </button>
+                <button>
+                    <img src="../../images/cross.svg" alt="">
+                </button>
+            </header>
+
+            <div id="presetsBody"></div>
         </div>
 
     </div>
