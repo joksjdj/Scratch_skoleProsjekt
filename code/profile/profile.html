@@ -9,11 +9,27 @@
 <body>
     <header>
         <img src="" alt="">
-        <h1></h1>
+        <div>
+            <h1 id="username"></h1>
+            <p>Created at: <span id="created_at"></span></p>
+        </div>
     </header>
     <main>
-        <header></header>
-        <iframe src="branches/stats.html" frameborder="0"></iframe>
+        <header>
+            <button onclick="switchPageBranch('stats')">
+                <h2>Stats</h2>
+            </button>
+            <button onclick="switchPageBranch('projects')">
+                <h2>Projects</h2>
+            </button>
+            <button onclick="switchPageBranch('friends')">
+                <h2>Friends</h2>
+            </button>
+            <button onclick="switchPageBranch('liked')">
+                <h2>Liked</h2>
+            </button>
+        </header>
+        <iframe id="branches" src="branches/stats.html" frameborder="0"></iframe>
     </main>
 </body>
 <style>
@@ -24,14 +40,12 @@
         width: 100%;
     }
     main {
-        position: absolute; top: 0; left: 0;
         width: 100vw;
         height: 100vh;
         border: none;
         margin: 0%;
     }
     main iframe {
-        position: absolute; top: 0; left: 0;
         width: 100%;
         height: calc(100% - 50px);
         border: none;
@@ -39,6 +53,18 @@
     }
 </style>
 <script defer>
+    function switchPageBranch(page) {
+        const branches = {
+            "stats": "stats.html",
+            "projects": "projects.html",
+            "friends": "friends.html",
+            "liked": "liked.html"
+        };
+
+        const iframe = document.getElementById("branches");
+        iframe.src = `branches/${branches[page]}`;
+    }
+    
     async function getProfile() {
         const collumns = ["username", "created_at"];
         
@@ -59,9 +85,12 @@
                 });
             }));
         }
+
+        document.getElementById("username").innerText = retrievedInfo[0][0]["username"];
+        document.getElementById("created_at").innerText = retrievedInfo[1][0]["created_at"];
     }
     setTimeout(() => {
         getProfile();
-    }, 5000);
+    }, 500);
 </script>
 </html>

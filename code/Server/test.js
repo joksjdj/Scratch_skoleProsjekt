@@ -18,7 +18,7 @@ app.use(
     resave: false,           // Avoid resaving unchanged sessions
     saveUninitialized: false, // Only save sessions with initialized data
     cookie: {
-      maxAge: 60000,         // 1-minute session expiry
+      maxAge: 60 * 60000,         // 1-minute session expiry
       sameSite: 'lax', // <- important for cross-origin
       secure: false, 
     },

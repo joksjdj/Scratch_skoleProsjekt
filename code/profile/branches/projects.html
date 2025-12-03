@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <header>
+        <h1>
+            Projects page
+        </h1>
+        <input id="newProjectName" type="text">
+        <button onclick="createProject()">
+            <h2>New project+</h2>
+        </button>
+    </header>
+    <main></main>
+</body>
+<script defer>
+
+    function editProject(name, userId) {
+        window.parent.parent.postMessage({ type: "editProject", name: name, userId: userId }, "*");
+        console.log("Editing project: "+name+" by user: "+userId);
+    }
+    async function fetchProjects() {
+        const res = await fetch("http://localhost:4000/profile?table=written_code&collumn=name,created_at,user_id", {
+            method: "GET",
+            credentials: "include"
+        });
+
+        const data = await res.json();
+        console.log(data);
+
+        for (const project of data.info) {
+            const projectElement = document.createElement("div");
+
+            projectElement.style.border = "1px solid black";
+            projectElement.style.boxSizing = "border-box";
+            projectElement.onclick = () => {
+                editProject(project.name , project.user_id);
+            };
+            projectElement.innerHTML = `
+                <h2>${project.name}</h2>
+                <p>Created at: ${project.created_at}</p>
+            `;
+            document.querySelector("main").appendChild(projectElement);
+        }
+    }
+    setTimeout(() => {
+        fetchProjects();
+    }, 100);
+
+    async function createProject() {
+        const name = document.getElementById("newProjectName").value;
+
+        if (name.length < 1) {
+            alert("Project name too short!");
+            return;
+        }
+        const res = await fetch("http://localhost:4000/createProject?name="+name, {
+            method: "GET",
+            credentials: "include",
+        });
+
+        const data = await res.json();
+        console.log(data);
+
+        if (!data.success) {
+            alert(data.message);
+            return;
+        } else {
+            alert("Project created successfully!");
+            location.reload();
+        }
+    }
+</script>
+</html>

@@ -8,7 +8,7 @@ async function getProfile(request, collumn) {
         if (request) {
             requestInfo = `?table=${request}&collumn=${collumn}`;
         }
-        const res = await fetch("http://localhost:4000/token"+requestInfo, {
+        const res = await fetch("http://localhost:4000/profile"+requestInfo, {
             method: "GET",
             credentials: "include"
         });
@@ -49,5 +49,8 @@ window.addEventListener("message", (event) => {
 
     } else if (type === "requestInfo") {
         getProfile(data.table, data.collumn);
+    } else if (type === "editProject") {
+        console.log(data)
+        iframe.src = 'codespace/codespace.html?name=' + encodeURIComponent(data.name) + '&userId=' + encodeURIComponent(data.userId);
     }
 });
