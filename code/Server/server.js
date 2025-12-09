@@ -6,7 +6,6 @@ const session = require('express-session');
 const cors = require('cors');
 const app = express();
 const cookieParser = require("cookie-parser");
-const e = require("express");
 app.use(cors({
   origin: ['http://127.0.0.1:5500', 'http://localhost:5500'],
   credentials: true
@@ -96,50 +95,6 @@ app.get('/login', async (req, res) => {
   }
 });
 
-
-app.get('/token', async (req, res) => {
-  try {
-    console.log('\n\n')
-
-    const userKey = req.session.userKey;
-
-    const requestedTable = req.query.table;
-    const requestedColumn = req.query.collumn;
-    console.log(userKey, requestedTable, requestedColumn);
-
-    const db = await connectToDatabase();
-
-    await db.connect(err => {
-      if (err) throw err;
-    });
-
-    const [rows] = await db.execute(
-      'SELECT * FROM tokens WHERE token = ?',
-      [userKey]
-    );
-
-    if (rows.length === 0) {
-      res.json({ success: false, message: "Invalid token" });
-      return;
-    } else {
-      console.log('Valid token for user ID:', rows[0].user_id);
-    }
-
-    const id = requestedTable === 'users' ? "id": "user_id";
-    const [infoRows] = await db.execute(
-      `SELECT ${requestedColumn} FROM ${requestedTable} WHERE ${id} = ?`,
-      [rows[0].user_id]
-    );
-
-    res.json({ success: true, info: infoRows});
-    db.end();
-    console.log('\n\n');
-  } catch (err) {
-    console.error(`[/token] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
-    res.status(500).json({ success: false, message: `Error: ${err.message}` });
-  }
-});
-
 async function checkToken(key) {
   const userKey = key;
   console.log(userKey);
@@ -207,25 +162,22 @@ app.get('/createProject', async (req, res) => {
     console.log('\n\n')
 
     const userKey = req.session.userKey;
+
+    const userId = await checkToken(userKey);
+    if (!userId) {
+      res.json({ success: false, message: "Invalid token" });
+      return;
+    }
+
     const projectName = req.query.name;
 
-    console.log(userKey, projectName);
+    console.log(projectName);
 
     const db = await connectToDatabase();
 
     await db.connect(err => {
       if (err) throw err;
     });
-
-    const [rows] = await db.execute(
-      'SELECT user_id FROM tokens WHERE token = ?',
-      [userKey]
-    );
-
-    if (rows.length === 0) {
-      res.json({ success: false, message: "Invalid token" });
-      return;
-    }
 
     const [projectAdded] = await db.execute(
       `INSERT IGNORE INTO written_code (user_id, name) VALUES (?, ?)`,
@@ -252,10 +204,16 @@ app.get('/fetchCode', async (req, res) => {
     console.log('\n\n')
 
     const userKey = req.session.userKey;
-    const projectName = req.query.name;
-    const userId = req.query.userId;
 
-    console.log(userKey, projectName, userId);
+    const userId = await checkToken(userKey);
+    if (!userId) {
+      res.json({ success: false, message: "Invalid token" });
+      return;
+    }
+
+    const projectName = req.query.name;
+
+    console.log(projectName, userId);
 
     const db = await connectToDatabase();
 
@@ -263,18 +221,45 @@ app.get('/fetchCode', async (req, res) => {
       if (err) throw err;
     });
 
-    const [rows] = await db.execute(
-      'SELECT user_id FROM tokens WHERE token = ?',
-      [userKey]
+    const [codeRows] = await db.execute(
+      `SELECT code, presets FROM written_code WHERE user_id = ? AND name = ?`,
+      [userId, projectName]
     );
+    console.log(codeRows);
 
-    if (rows.length === 0) {
+    db.end();
+
+    res.json({ 
+      success: true, 
+      code: codeRows[0]?.code || "addEvent('keydown', (e) => {\n\n\tconst const x = e.key == 'a' ? -10 : e.key == 'd' ? 10 : 0;\n\tconst y = e.key == 'w' ? -10 : e.key == 's' ? 10 : 0;\n\n\tmoveMentControll('figure', 'figure', 'add', x, y);\n\n}); // type, name, action, x, y (action: add, set)", 
+      presets: codeRows[0]?.presets || ""
+    });
+
+  } catch (err) {
+    console.error(`[/fetchCode] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
+    res.status(500).json({ success: false, message: `Error: ${err.message}` });
+  }
+});
+
+app.get('/setCode', async (req, res) => {
+  try {
+    console.log('\n\n')
+
+    const userKey = req.session.userKey;
+    const userId = await checkToken(userKey);
+    if (!userId) {
       res.json({ success: false, message: "Invalid token" });
       return;
     }
 
+    const db = await connectToDatabase();
+
+    await db.connect(err => {
+      if (err) throw err;
+    });
+    
   } catch (err) {
-    console.error(`[/fetchCode] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
+    console.error(`[/setCode] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
     res.status(500).json({ success: false, message: `Error: ${err.message}` });
   }
 });

@@ -51,6 +51,6 @@ window.addEventListener("message", (event) => {
         getProfile(data.table, data.collumn);
     } else if (type === "editProject") {
         console.log(data)
-        iframe.src = 'codespace/codespace.html?name=' + encodeURIComponent(data.name) + '&userId=' + encodeURIComponent(data.userId);
+        iframe.src = 'codespace/codespace.html?name=' + encodeURIComponent(data.name);
     }
 });

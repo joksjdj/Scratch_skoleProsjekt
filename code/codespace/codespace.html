@@ -34,16 +34,6 @@
         <iframe id="iframe" class="top-left" sandbox="allow-scripts" src="iframe/iframe.html" frameborder="0"></iframe>
 
 <textarea class="textarea top-right" name="" id="textarea">
-addEvent('keydown', (e) => {
-
-    console.log(e.key);
-
-    const x = e.key == "a" ? -10 : e.key == "d" ? 10 : 0;
-    const y = e.key == "w" ? -10 : e.key == "s" ? 10 : 0;
-    
-    moveMentControll("figure", "figure", "add", x, y);
-
-}); // type, name, action, x, y (action: add, set)
 </textarea>
 
         <div class="presetsControll bottom-left presetBox">

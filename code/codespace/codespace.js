@@ -3,6 +3,125 @@ let addPresetValue;
 let addType;
 const iframe = document.getElementById("iframe");
 const child = iframe.contentWindow;
+
+const textarea = document.getElementById("textarea");
+let textKeydown = "";
+let deletedText = 0;
+let pos = 0;
+
+async function sendJsVariable() {
+    const text = textarea.value.trim();
+
+    try {
+        child.postMessage({ absoluteType: "jsVariable", code: text }, "*");
+    } catch (error) {
+        console.error("Error sending JS variable to iframe:", error);
+    }
+}
+
+async function setCode() {}
+
+let saveTimeout = 0;
+let saveTimeoutRun = false;
+async function timeoutSave() {
+    saveTimeoutRun = true;
+
+    const interval = setInterval(() => {
+        saveTimeout--;
+        if (saveTimeout <= 0) {
+            clearInterval(interval);
+
+            saveTimeoutRun = false;
+            console.log("Saving code...");
+
+            const savedText = textKeydown;
+            textKeydown = "";
+            const deleted = deletedText;
+            deletedText = 0;
+            const currentPos = pos;
+            fetch(`http://localhost:4000/setCode`, {
+                method: "POST",
+                credentials: "include",
+                body: JSON.stringify({
+                    start: currentPos,
+                    replace: deleted,
+                    insert: savedText
+                }),
+            }); // INSERT(longtext_column, start, replace, 'savedText')
+        }
+    }, 1000);
+}
+
+textarea.addEventListener("keydown", async (event) => {
+    const key = event.key;
+    const selectStart = textarea.selectionStart;
+    const selectEnd = textarea.selectionEnd;
+
+    console.log("Start index:", selectStart, "End index:", selectEnd);
+
+    if (/^[a-zA-Z0-9]$/.test(key)) {
+        textKeydown += key;
+    } else if (key === "Tab") {
+        textKeydown += "\t";
+    } else if (key === "Enter") {
+        textKeydown += "\n";
+    } else if (key === "Backspace") {
+        textKeydown = textKeydown.slice(0, -1);
+
+        if (textKeydown.length >= 0 && selectStart === selectEnd) {
+            deletedText++;
+        } else if (selectStart !== selectEnd) {
+            deletedText += selectEnd - selectStart;
+        }
+    } else if (key === "Space") {
+        textKeydown += " ";
+    }
+
+    saveTimeout = 3;
+    if (saveTimeoutRun === false) {
+        timeoutSave();
+    }
+
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", "Space"].includes(key)) {
+        saveTimeout = 0;
+    }
+
+    textarea.addEventListener("click", function interuptTimeoutSave() {
+        saveTimeout = 0;
+        textarea.removeEventListener("click", interuptTimeoutSave);
+    });
+
+    console.log(textKeydown);
+
+    pos = textarea.selectionStart - textKeydown.length;
+    console.log("Cursor index:", pos);
+});
+
+async function fetchCode() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectName = urlParams.get('name');
+
+    try {
+        const res = await fetch(`http://localhost:4000/fetchCode?name=${encodeURIComponent(projectName)}`, {
+            method: "GET",
+            credentials: "include"
+        });
+        const data = await res.json();
+        console.log(data);
+
+        if (data.code !== "") {
+            textarea.value = data.code;
+        }
+
+        if (data.presets !== "") {
+            child.postMessage({ type: "loadPresets", presets: data.presets }, "*");
+        }
+    } catch (error) {
+        console.error("Error fetching code:", error);
+    }
+}
+fetchCode();
+
 {
 
     function removeScript(el, position) {
@@ -147,17 +266,3 @@ window.addEventListener('message', event => {
         }
     }
 });
-
-const textarea = document.getElementById("textarea");
-
-function sendJsVariable() {
-    const text = textarea.value.trim();
-
-    try {
-        child.postMessage({ absoluteType: "jsVariable", code: text }, "*");
-    } catch (error) {
-        console.error("Error sending JS variable to iframe:", error);
-    }
-} sendJsVariable();
-
-textarea.addEventListener("input", sendJsVariable);

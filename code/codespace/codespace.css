@@ -119,3 +119,10 @@ iframe {
     cursor: pointer;
     visibility: visible;
 }
+
+#textarea {
+    overflow-x: scroll;
+    max-width: 100%;
+    min-width: 100%;
+    white-space: nowrap;
+}
