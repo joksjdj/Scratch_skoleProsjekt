@@ -172,8 +172,12 @@ window.addEventListener('message', event => {
       "const addEvent = window.addEventListener.bind(window);\n"+
       data.code
     ;
-    eval(code);
-    console.log(code);
+    try {
+      eval(code);
+      console.log(code);
+    } catch (err) {
+      console.error(err)
+    }
   }
 
 });

@@ -199,7 +199,7 @@ app.get('/createProject', async (req, res) => {
   }
 });
 
-app.get('/fetchCode', async (req, res) => {
+app.post('/fetchCode', async (req, res) => {
   try {
     console.log('\n\n')
 
@@ -257,6 +257,12 @@ app.get('/setCode', async (req, res) => {
     await db.connect(err => {
       if (err) throw err;
     });
+
+    const { start, replace, insert } = req.body;
+
+    console.log("saving changes", start, replace, insert)
+
+    res.json({ response: "done" })
     
   } catch (err) {
     console.error(`[/setCode] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
