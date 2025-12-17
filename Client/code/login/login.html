@@ -18,20 +18,31 @@
     </div>
 </body>
 <script defer>
-    async function confirmLoginUser() {
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
+async function loginUser(username, password) {
+    
+    const res = await fetch(`http://localhost:4000/login?username=${username}&password=${password}`, {
+        method: "GET",
+        credentials: "include"
+    });
+    const data = await res.json();
+    console.log(data);
 
-        if (!username || !password) {
-            alert("Please enter both username and password.");
-            return;
-        }
-        
-        parent.postMessage({
-            type: "login",
-            username: username,
-            password: password
-        }, "*");
+    if (data.success) {
+        window.location.href = "../profile/profile.html";
+    } else {
+        alert("Invalid credentials")
     }
+}
+async function confirmLoginUser() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) {
+        alert("Please enter both username and password.");
+        return;
+    }
+    
+    loginUser(username, password)
+}
 </script>
 </html>

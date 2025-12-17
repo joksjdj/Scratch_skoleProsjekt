@@ -19,60 +19,59 @@
 </body>
 <script defer>
 
-    function editProject(name, userId) {
-        window.parent.parent.postMessage({ type: "editProject", name: name, userId: userId }, "*");
-        console.log("Editing project: "+name+" by user: "+userId);
+function editProject(name, userId) {
+    window.parent.location.href = '../../codespace/codespace.html?name=' + encodeURIComponent(name);
+}
+async function fetchProjects() {
+    const res = await fetch("http://localhost:4000/profile?table=written_code&column=name,created_at,user_id", {
+        method: "GET",
+        credentials: "include"
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    for (const project of data.info) {
+        const projectElement = document.createElement("div");
+
+        projectElement.style.border = "1px solid black";
+        projectElement.style.boxSizing = "border-box";
+        projectElement.onclick = () => {
+            editProject(project.name , project.user_id);
+        };
+        projectElement.innerHTML = `
+            <h2>${project.name}</h2>
+            <p>Created at: ${project.created_at}</p>
+        `;
+        document.querySelector("main").appendChild(projectElement);
     }
-    async function fetchProjects() {
-        const res = await fetch("http://localhost:4000/profile?table=written_code&collumn=name,created_at,user_id", {
-            method: "GET",
-            credentials: "include"
-        });
+}
+setTimeout(() => {
+    fetchProjects();
+}, 100);
 
-        const data = await res.json();
-        console.log(data);
+async function createProject() {
+    const name = document.getElementById("newProjectName").value;
 
-        for (const project of data.info) {
-            const projectElement = document.createElement("div");
-
-            projectElement.style.border = "1px solid black";
-            projectElement.style.boxSizing = "border-box";
-            projectElement.onclick = () => {
-                editProject(project.name , project.user_id);
-            };
-            projectElement.innerHTML = `
-                <h2>${project.name}</h2>
-                <p>Created at: ${project.created_at}</p>
-            `;
-            document.querySelector("main").appendChild(projectElement);
-        }
+    if (name.length < 1) {
+        alert("Project name too short!");
+        return;
     }
-    setTimeout(() => {
-        fetchProjects();
-    }, 100);
+    const res = await fetch("http://localhost:4000/createProject?name="+name, {
+        method: "GET",
+        credentials: "include",
+    });
 
-    async function createProject() {
-        const name = document.getElementById("newProjectName").value;
+    const data = await res.json();
+    console.log(data);
 
-        if (name.length < 1) {
-            alert("Project name too short!");
-            return;
-        }
-        const res = await fetch("http://localhost:4000/createProject?name="+name, {
-            method: "GET",
-            credentials: "include",
-        });
-
-        const data = await res.json();
-        console.log(data);
-
-        if (!data.success) {
-            alert(data.message);
-            return;
-        } else {
-            alert("Project created successfully!");
-            location.reload();
-        }
+    if (!data.success) {
+        alert(data.message);
+        return;
+    } else {
+        alert("Project created successfully!");
+        location.reload();
     }
+}
 </script>
 </html>

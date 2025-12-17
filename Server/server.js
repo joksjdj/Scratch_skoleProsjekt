@@ -35,7 +35,7 @@ app.use(
     resave: false,           // Avoid resaving unchanged sessions
     saveUninitialized: false, // Only save sessions with initialized data
     cookie: {
-      maxAge: 60000,         // 1-minute session expiry
+      maxAge: 60 * 60000,         // 1-hour session expiry
       sameSite: 'lax', // <- important for cross-origin
       secure: false, 
     },
@@ -45,6 +45,7 @@ app.use(
 app.get('/login', async (req, res) => {
   try {
     console.log('\n\n')
+    console.log('/login')
     console.log(req.query);
 
     const username = req.query.username;
@@ -97,7 +98,8 @@ app.get('/login', async (req, res) => {
 
 async function checkToken(key) {
   const userKey = key;
-  console.log(userKey);
+  
+  !userKey ? console.log(userKey) : console.log("Userkey found");
 
   const db = await connectToDatabase();
 
@@ -113,9 +115,9 @@ async function checkToken(key) {
   db.end();
 
   if (rows.length === 0) {
+    console.log('Invalid token for user ID:', rows[0].user_id);
     return false;
   } else {
-    console.log('Valid token for user ID:', rows[0].user_id);
     return rows[0].user_id;
   }
 }
@@ -123,6 +125,7 @@ async function checkToken(key) {
 app.get('/profile', async (req, res) => {
   try {
     console.log('\n\n')
+    console.log('/profile')
 
     const userKey = req.session.userKey;
 
@@ -133,7 +136,7 @@ app.get('/profile', async (req, res) => {
     }
 
     const requestedTable = req.query.table;
-    const requestedColumn = req.query.collumn;
+    const requestedColumn = req.query.column;
     console.log(requestedTable, requestedColumn);
 
     const db = await connectToDatabase();
@@ -160,6 +163,7 @@ app.get('/profile', async (req, res) => {
 app.get('/createProject', async (req, res) => {
   try {
     console.log('\n\n')
+    console.log('/createProject')
 
     const userKey = req.session.userKey;
 
@@ -199,9 +203,10 @@ app.get('/createProject', async (req, res) => {
   }
 });
 
-app.post('/fetchCode', async (req, res) => {
+app.get('/fetchCode', async (req, res) => {
   try {
     console.log('\n\n')
+    console.log('/fetchCode')
 
     const userKey = req.session.userKey;
 
@@ -227,11 +232,24 @@ app.post('/fetchCode', async (req, res) => {
     );
     console.log(codeRows);
 
+    const savedText = "addEvent('keydown', (e) => {\n\n\tconst const x = e.key == 'a' ? -10 : e.key == 'd' ? 10 : 0;\n\tconst y = e.key == 'w' ? -10 : e.key == 's' ? 10 : 0;\n\n\tmoveMentControll('figure', 'figure', 'add', x, y);\n\n}); // type, name, action, x, y (action: add, set)";
+
+    if (!codeRows[0]?.code) {
+      await db.execute(
+        `UPDATE written_code
+        SET code = ?
+        WHERE user_id = ? AND name = ?`,
+        [savedText, userId, projectName]
+      );
+      console.log("no preexisting code")
+    }
+
     db.end();
 
     res.json({ 
       success: true, 
-      code: codeRows[0]?.code || "addEvent('keydown', (e) => {\n\n\tconst const x = e.key == 'a' ? -10 : e.key == 'd' ? 10 : 0;\n\tconst y = e.key == 'w' ? -10 : e.key == 's' ? 10 : 0;\n\n\tmoveMentControll('figure', 'figure', 'add', x, y);\n\n}); // type, name, action, x, y (action: add, set)", 
+      code: codeRows[0]?.code || savedText, 
+      codeLenght: codeRows[0]?.code.length || savedText.length,
       presets: codeRows[0]?.presets || ""
     });
 
@@ -241,9 +259,10 @@ app.post('/fetchCode', async (req, res) => {
   }
 });
 
-app.get('/setCode', async (req, res) => {
+app.post('/setCode', async (req, res) => {
   try {
     console.log('\n\n')
+    console.log('/setCode')
 
     const userKey = req.session.userKey;
     const userId = await checkToken(userKey);
@@ -258,9 +277,21 @@ app.get('/setCode', async (req, res) => {
       if (err) throw err;
     });
 
-    const { start, replace, insert } = req.body;
+    console.log(req.body)
+    const { start, replace, insert, name } = req.body;
 
-    console.log("saving changes", start, replace, insert)
+    const fixedInsert = !insert ? "" : insert.replace("${space}", " ");
+
+    console.log("saving changes", start, replace, fixedInsert, "into", name)
+
+    await db.execute(
+      `UPDATE written_code
+      SET code = INSERT(code, ?, ?, ?)
+      WHERE user_id = ? AND name = ?`,
+      [start, replace, (fixedInsert || ""), userId, name]
+    );
+
+    db.end()
 
     res.json({ response: "done" })
     

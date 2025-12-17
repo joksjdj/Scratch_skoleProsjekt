@@ -53,44 +53,48 @@
     }
 </style>
 <script defer>
-    function switchPageBranch(page) {
-        const branches = {
-            "stats": "stats.html",
-            "projects": "projects.html",
-            "friends": "friends.html",
-            "liked": "liked.html"
-        };
+function switchPageBranch(page) {
+    const branches = {
+        "stats": "stats.html",
+        "projects": "projects.html",
+        "friends": "friends.html",
+        "liked": "liked.html"
+    };
 
-        const iframe = document.getElementById("branches");
-        iframe.src = `branches/${branches[page]}`;
-    }
-    
-    async function getProfile() {
-        const collumns = ["username", "created_at"];
-        
-        const retrievedInfo = [];
-        for (const collumn of collumns) {
-            parent.postMessage({
-                type: "requestInfo",
-                table: "users",
-                collumn: collumn
-            }, "*");
-            retrievedInfo.push(await new Promise((resolve) => {
-                window.addEventListener("message", function handler(event) {
-                    if (event.data.type === "responseInfo") {
-                        window.removeEventListener("message", handler);
-                        console.log(event.data.value);
-                        resolve(event.data.value);
-                    }
-                });
-            }));
+    const iframe = document.getElementById("branches");
+    iframe.src = `branches/${branches[page]}`;
+}
+
+async function getProfile() {
+    const columns = ["username", "created_at"];
+
+    for (const column of columns) {
+        const table = "users"
+
+        const requestInfo = `?table=${table}&column=${column}`;
+        try {
+            const res = await fetch("http://localhost:4000/profile"+requestInfo, {
+                method: "GET",
+                credentials: "include"
+            });
+
+            const data = await res.json();
+            console.log(data);
+
+            if (!data.success) {
+                window.location.href = "../login/login.html";
+            }
+
+            document.getElementById(column).innerText = data["info"][0][column];
+        } catch (error) {
+            console.error("Error fetching profile:", error);
+            window.location.href = "../login/login.html";
         }
-
-        document.getElementById("username").innerText = retrievedInfo[0][0]["username"];
-        document.getElementById("created_at").innerText = retrievedInfo[1][0]["created_at"];
     }
-    setTimeout(() => {
-        getProfile();
-    }, 500);
+}
+
+setTimeout(() => {
+    getProfile();
+}, 500);
 </script>
 </html>

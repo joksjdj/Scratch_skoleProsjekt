@@ -7,7 +7,7 @@ const child = iframe.contentWindow;
 const textarea = document.getElementById("textarea");
 let textKeydown = "";
 let deletedText = 0;
-let pos = 0;
+let pos = { type: "normal", value: 0 };
 
 async function sendJsVariable() {
     const text = textarea.value.trim();
@@ -26,28 +26,56 @@ let saveTimeoutRun = false;
 async function timeoutSave() {
     saveTimeoutRun = true;
 
-    const interval = setInterval(() => {
+    const interval = setInterval( async () => {
         saveTimeout--;
-        if (saveTimeout <= 0) {
+
+        if (saveTimeout <= 0 && !(deletedText <= 0 && textKeydown === "")) {
             clearInterval(interval);
+
+            if (pos.type !== "normal") {
+                pos.value = textarea.selectionStart + (pos.value - textarea.selectionStart);
+                pos.type = "normal";
+            } else {
+                pos.value = textarea.selectionStart;
+            }
+
+            console.log(pos)
+            console.log(textKeydown)
 
             saveTimeoutRun = false;
             console.log("Saving code...");
 
-            const savedText = textKeydown;
+            const savedText = textKeydown || null;
+            let savedTextLenght;
+            try {
+                savedTextLenght = savedText.replace("${space}", "e");
+            } catch {
+                savedTextLenght = savedText || 0;
+            }
             textKeydown = "";
             const deleted = deletedText;
             deletedText = 0;
-            const currentPos = pos;
-            fetch(`http://localhost:4000/setCode`, {
+            const currentPos = savedText ? pos.value - savedTextLenght.length -1 : pos.value -1;
+            console.log(currentPos)
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectName = urlParams.get('name');
+            const res = await fetch(`http://localhost:4000/setCode`, {
                 method: "POST",
                 credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 body: JSON.stringify({
                     start: currentPos,
                     replace: deleted,
-                    insert: savedText
+                    insert: savedText,
+                    name: projectName
                 }),
-            }); // INSERT(longtext_column, start, replace, 'savedText')
+            });
+            
+            const response = await res.json();
+            console.log(response)
         }
     }, 1000);
 }
@@ -59,22 +87,24 @@ textarea.addEventListener("keydown", async (event) => {
 
     console.log("Start index:", selectStart, "End index:", selectEnd);
 
-    if (/^[a-zA-Z0-9]$/.test(key)) {
+    if (/^[a-zA-Z0-9]$/.test(key) || key === "/") {
         textKeydown += key;
     } else if (key === "Tab") {
         textKeydown += "\t";
     } else if (key === "Enter") {
         textKeydown += "\n";
     } else if (key === "Backspace") {
-        textKeydown = textKeydown.slice(0, -1);
+        let spaceCheck = textKeydown.slice(0, -8);
 
-        if (textKeydown.length >= 0 && selectStart === selectEnd) {
+        textKeydown = spaceCheck === "${space}" ? spaceCheck : textKeydown.slice(0, -1);
+
+        if (textKeydown.length <= 0 && selectStart === selectEnd) {
             deletedText++;
         } else if (selectStart !== selectEnd) {
             deletedText += selectEnd - selectStart;
         }
-    } else if (key === "Space") {
-        textKeydown += " ";
+    } else if (key === " ") {
+        textKeydown += "${space}";
     }
 
     saveTimeout = 3;
@@ -82,19 +112,21 @@ textarea.addEventListener("keydown", async (event) => {
         timeoutSave();
     }
 
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", "Space"].includes(key)) {
+    if (deletedText <= 0 && textKeydown === "") return;
+
+    if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Enter"].includes(key)) {
+        pos.type = "special";
+        saveTimeout = 0;
+    } else if (key === "Space") {
+        pos.value = textarea.selectionStart;
         saveTimeout = 0;
     }
 
     textarea.addEventListener("click", function interuptTimeoutSave() {
+        pos.type = "special";
         saveTimeout = 0;
         textarea.removeEventListener("click", interuptTimeoutSave);
     });
-
-    console.log(textKeydown);
-
-    pos = textarea.selectionStart - textKeydown.length;
-    console.log("Cursor index:", pos);
 });
 
 async function fetchCode() {
