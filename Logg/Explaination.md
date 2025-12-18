@@ -33,8 +33,7 @@
 
 ![alt text](image-8.png)
 
-localhost vs live server
-
+Jeg forminsket flere av de repetetive linjene ved å bruke for loops.
 
 ![alt text](image-9.png)
 
@@ -42,5 +41,7 @@ localhost vs live server
 
 ![alt text](image-11.png)
 
+Her gjorde jeg om token checkingen om til en funksjon for slippe å skrive hele om og om igjen.
 
-I removed client, as it was cleaner without.
+
+I removed client.html, as it was cleaner without.

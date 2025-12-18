@@ -1,6 +1,7 @@
 const mysql = require("mysql2/promise");
 const crypto = require("crypto");
 
+const os = require("os");
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -12,6 +13,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+const interfaces = os.networkInterfaces();
+let ipAddress; 
+for (const name in interfaces) { 
+  for (const iface of interfaces[name]) { 
+    if (iface.family === "IPv4" && !iface.internal) { 
+      console.log("IP Address:", iface.address); 
+      ipAddress = iface.address;
+    } 
+  }
+} // this was suposed to be used for allowing other access but didnt have time
 
 async function connectToDatabase() {
   try {
@@ -31,7 +43,7 @@ async function connectToDatabase() {
 
 app.use(
   session({
-    secret: 'yourSecretKey', // Replace with a unique key
+    secret: 'yourSecretKey',
     resave: false,           // Avoid resaving unchanged sessions
     saveUninitialized: false, // Only save sessions with initialized data
     cookie: {
@@ -279,17 +291,25 @@ app.post('/setCode', async (req, res) => {
 
     console.log(req.body)
     const { start, replace, insert, name } = req.body;
+    const [rows] = await db.execute( `SELECT CHAR_LENGTH(code) AS charLen, LENGTH(code) AS byteLen FROM written_code WHERE user_id = ? AND name = ?`, [userId, name] ); console.log("Character length:", rows[0].charLen); console.log("Byte length:", rows[0].byteLen);
 
-    const fixedInsert = !insert ? "" : insert.replace("${space}", " ");
+    console.log("saving changes", start, replace, insert, "into", name)
 
-    console.log("saving changes", start, replace, fixedInsert, "into", name)
-
-    await db.execute(
-      `UPDATE written_code
-      SET code = INSERT(code, ?, ?, ?)
-      WHERE user_id = ? AND name = ?`,
-      [start, replace, (fixedInsert || ""), userId, name]
-    );
+    if (rows[0].charLen < start) {
+      await db.execute( `
+        UPDATE written_code 
+        SET code = CONCAT(code, ?) 
+        WHERE user_id = ? AND name = ?`, 
+        [insert, userId, name] 
+      );
+    } else {
+      await db.execute(
+        `UPDATE written_code
+        SET code = INSERT(code, ?, ?, ?)
+        WHERE user_id = ? AND name = ?`,
+        [start, replace, (insert || ""), userId, name]
+      );
+    }
 
     db.end()
 

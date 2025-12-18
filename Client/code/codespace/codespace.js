@@ -46,16 +46,10 @@ async function timeoutSave() {
             console.log("Saving code...");
 
             const savedText = textKeydown || null;
-            let savedTextLenght;
-            try {
-                savedTextLenght = savedText.replace("${space}", "e");
-            } catch {
-                savedTextLenght = savedText || 0;
-            }
             textKeydown = "";
             const deleted = deletedText;
             deletedText = 0;
-            const currentPos = savedText ? pos.value - savedTextLenght.length -1 : pos.value -1;
+            const currentPos = savedText ? pos.value - savedText.length +1 : pos.value +1;
             console.log(currentPos)
 
             const urlParams = new URLSearchParams(window.location.search);
@@ -87,16 +81,14 @@ textarea.addEventListener("keydown", async (event) => {
 
     console.log("Start index:", selectStart, "End index:", selectEnd);
 
-    if (/^[a-zA-Z0-9]$/.test(key) || key === "/") {
+    if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
         textKeydown += key;
     } else if (key === "Tab") {
         textKeydown += "\t";
     } else if (key === "Enter") {
         textKeydown += "\n";
     } else if (key === "Backspace") {
-        let spaceCheck = textKeydown.slice(0, -8);
-
-        textKeydown = spaceCheck === "${space}" ? spaceCheck : textKeydown.slice(0, -1);
+        textKeydown = textKeydown.slice(0, -1);
 
         if (textKeydown.length <= 0 && selectStart === selectEnd) {
             deletedText++;
@@ -104,20 +96,22 @@ textarea.addEventListener("keydown", async (event) => {
             deletedText += selectEnd - selectStart;
         }
     } else if (key === " ") {
-        textKeydown += "${space}";
+        textKeydown += " ";
     }
+
+    if (deletedText <= 0 && textKeydown === "") return;
+
+    console.log(textKeydown)
 
     saveTimeout = 3;
     if (saveTimeoutRun === false) {
         timeoutSave();
     }
 
-    if (deletedText <= 0 && textKeydown === "") return;
-
-    if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp", "Enter"].includes(key)) {
+    if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(key)) {
         pos.type = "special";
         saveTimeout = 0;
-    } else if (key === "Space") {
+    } else if (["Space", "Enter"].includes(key)) {
         pos.value = textarea.selectionStart;
         saveTimeout = 0;
     }
