@@ -45,3 +45,5 @@ Her gjorde jeg om token checkingen om til en funksjon for slippe å skrive hele 
 
 
 I removed client.html, as it was cleaner without.
+
+Jeg fikset saving probleme med en if statement.
