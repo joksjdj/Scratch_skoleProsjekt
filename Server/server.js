@@ -54,6 +54,48 @@ app.use(
   })
 );
 
+async function tokenSave(username, password) {
+  let saved = false;
+
+  const db = await connectToDatabase();
+
+  await db.connect(err => {
+    if (err) throw err;
+    console.log("Connected!");
+  });
+
+  let key;
+
+  while (!saved) {
+    key = crypto.randomBytes(64).toString("hex");
+
+    const [rows] = await db.execute(
+      'SELECT * FROM users WHERE username = ? AND password = ?',
+      [username, password]
+    );
+
+    if (rows.length === 0) {
+      res.json({ success: false, message: "Invalid credentials" });
+      return;
+    }
+
+    const [checkSave] = await db.execute(
+      `INSERT IGNORE INTO tokens (user_id, token) VALUES (?, ?)`,
+      [rows[0].id, key]
+    );
+
+    console.log(checkSave.affectedRows)
+
+    if (checkSave.affectedRows > 0) {
+      saved = true
+    }
+  }
+
+  db.end();
+
+  return key;
+}
+
 app.get('/login', async (req, res) => {
   try {
     console.log('\n\n')
@@ -64,31 +106,7 @@ app.get('/login', async (req, res) => {
     const password = req.query.password;
 
     if (!req.session.userKey) {
-      req.session.userKey = crypto.randomBytes(64).toString("hex");
-
-      const db = await connectToDatabase();
-
-      await db.connect(err => {
-        if (err) throw err;
-        console.log("Connected!");
-      });
-
-      const [rows] = await db.execute(
-        'SELECT * FROM users WHERE username = ? AND password = ?',
-        [username, password]
-      );
-
-      if (rows.length === 0) {
-        res.json({ success: false, message: "Invalid credentials" });
-        return;
-      }
-
-      await db.execute(
-        `INSERT IGNORE INTO tokens (user_id, token) VALUES (?, ?)`,
-        [rows[0].id, req.session.userKey]
-      );
-
-      db.end();
+      req.session.userKey = await tokenSave(username, password)
     } else {
       console.log("Existing session:", req.session.userKey);
     }
@@ -104,6 +122,51 @@ app.get('/login', async (req, res) => {
     res.json({ success: true, message: "Logged in successfully" });
   } catch (err) {
     console.error(`[/login] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
+    res.status(500).json({ success: false, message: `Error: ${err.message}` });
+  }
+});
+
+app.get('/signup', async (req, res) => {
+  try {
+    console.log('\n\n')
+    console.log('/signup')
+    console.log(req.query);
+
+    const username = req.query.username;
+    const password = req.query.password;
+
+    const db = await connectToDatabase();
+
+    await db.connect(err => {
+      if (err) throw err;
+      console.log("Connected!");
+    });
+
+    const [rows] = await db.execute(
+      `INSERT IGNORE INTO users (username, password) VALUES (?, ?)`,
+      [username, password]
+    );
+
+    db.end();
+
+    if (rows.length === 0) {
+      res.json({ success: false, message: "Invalid credentials" });
+      return;
+    }
+
+    req.session.userKey = tokenSave(username, password);
+
+    if (!req.session.visits) req.session.visits = 0;
+    req.session.visits++;
+
+    console.log('Session ID:', req.sessionID);
+    console.log('Session Data:', req.session);
+    console.log('Visits:', req.session.visits);
+    console.log('\n\n')
+
+    res.json({ success: true, message: "Logged in successfully" });
+  } catch (err) {
+    console.error(`[/signup] Error at line ${err.stack?.split('\n')[1] || 'unknown'}: ${err.message}`);
     res.status(500).json({ success: false, message: `Error: ${err.message}` });
   }
 });

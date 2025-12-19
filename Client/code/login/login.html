@@ -14,7 +14,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
         <br>
-        <button onclick="confirmLoginUser()">Login</button>
+        <button onclick="confirmUser('login')">Login</button><button onclick="confirmUser('signup')">Signup</button>
     </div>
 </body>
 <script defer>
@@ -30,10 +30,26 @@ async function loginUser(username, password) {
     if (data.success) {
         window.location.href = "../profile/profile.html";
     } else {
-        alert("Invalid credentials")
+        alert("Invalid credentials!")
     }
 }
-async function confirmLoginUser() {
+
+async function createUser(username, password) {
+    
+    const res = await fetch(`http://localhost:4000/signup?username=${username}&password=${password}`, {
+        method: "GET",
+        credentials: "include"
+    });
+    const data = await res.json();
+    console.log(data);
+
+    if (data.success) {
+        window.location.href = "../profile/profile.html";
+    } else {
+        alert("Something went wrong!")
+    }
+}
+async function confirmUser(type) {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
@@ -42,7 +58,11 @@ async function confirmLoginUser() {
         return;
     }
     
-    loginUser(username, password)
+    if (type === "login") {
+        loginUser(username, password)
+    } else if (type === "signup") {
+        createUser(username, password)
+    }
 }
 </script>
 </html>
