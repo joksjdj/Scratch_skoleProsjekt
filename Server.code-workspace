@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "Server"
+		},
+		{
+			"path": "Client"
+		},
+		{
+			"path": "Logg"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "Client"
+	}
+}
